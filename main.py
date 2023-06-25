@@ -1,8 +1,6 @@
 import numpy as np
-import scipy
 import matplotlib.pyplot as plt
 import torch
-from model import get_unet_model
 import os 
 from tqdm import tqdm
 from lyft_dataset_sdk.lyftdataset import LyftDataset
@@ -13,12 +11,26 @@ import pandas as pd
 from transformation import  prepare_training_data_for_scene
 from functools import partial
 from multiprocessing import Pool
+import sys
+from train import train,predict,visualize_boxes,clean_up
+# Disable multiprocesing for numpy/opencv. We already multiprocess ourselves, this would mean every subprocess produces
+# even more threads which would lead to a lot of context switching, slowing things down a lot.
+os.environ["OMP_NUM_THREADS"] = "1"
+
+
+def visualize_lidar_of_sample(level5data,sample_token, axes_limit=80):
+    sample = level5data.get("sample", sample_token)
+    sample_lidar_token = sample["data"]["LIDAR_TOP"]
+    level5data.render_sample_data(sample_lidar_token, axes_limit=axes_limit)
+    
+
 
 if __name__ == '__main__':
+    json_path = sys.argv[1]
     # Our code will generate data, visualization and model checkpoints, they will be persisted to disk in this folder
     ARTIFACTS_FOLDER = "./artifacts"
     # json_path='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
-    json_path='Dataset/train_data'
+    # json_path='Dataset/train_data'
 
     level5data = LyftDataset(data_path='Dataset', json_path=json_path, verbose=True)
     os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
@@ -71,7 +83,6 @@ if __name__ == '__main__':
     count =0
     for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
         count+=1
-        print("/n/n/n/n/ncount:",count)
         print("Preparing data into {} using {} workers".format(data_folder, NUM_WORKERS))
         first_samples = df.first_sample_token.values
 
@@ -86,3 +97,28 @@ if __name__ == '__main__':
             pass
         pool.close()
         del pool
+
+    # Some hyperparameters we'll need to define for the system
+    voxel_size = (0.4, 0.4, 1.5)
+    z_offset = -2.0
+    bev_shape = (336, 336, 3)
+    # We scale down each box so they are more separated when projected into our coarse voxel space.
+    box_scale = 0.8
+
+    train_data_folder = os.path.join(ARTIFACTS_FOLDER, "bev_train_data")
+    validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
+
+    # We weigh the loss for the 0 class lower to account for (some of) the big class imbalance.
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    class_weights = torch.from_numpy(np.array([0.2] + [1.0]*len(classes), dtype=np.float32))
+    class_weights = class_weights.to(device)
+
+
+    train(train_data_folder,classes, ARTIFACTS_FOLDER)
+
+    predictions_opened,predictions,detection_boxes,detection_classes,detection_scores =predict(validation_data_folder,
+                                                                            classes, 
+                                                                            ARTIFACTS_FOLDER,
+                                                                            class_weights)
+    visualize_boxes(predictions_opened,detection_boxes,detection_scores,id)
+    clean_up(train_data_folder,validation_data_folder)
