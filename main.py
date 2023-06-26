@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     json_path='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
     dataset_path='Dataset'
-    opts, args = getopt.getopt(sys.argv,"h",["dataset=","json="])
+    opts, args = getopt.getopt(sys.argv[1:],"h",["dataset=","json="])
     for opt, arg in opts:
         if opt == '-h':
             print ('main.py -dataset <dataset path> -json <json path>')
@@ -37,7 +37,6 @@ if __name__ == '__main__':
             dataset_path = arg
         elif opt in ( "--json"):
             json_path = arg
-
     # Our code will generate data, visualization and model checkpoints, they will be persisted to disk in this folder
     ARTIFACTS_FOLDER = "./artifacts"
 
