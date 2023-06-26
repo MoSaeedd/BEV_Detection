@@ -42,7 +42,6 @@ if __name__ == '__main__':
 
 
     level5data = LyftDataset(data_path=dataset_path, json_path=json_path, verbose=True)
-    os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
     classes = ["car", "motorcycle", "bus", "bicycle", "truck", "pedestrian", "other_vehicle", "animal", "emergency_vehicle"]
 
     records = [(level5data.get('sample', record['first_sample_token'])['timestamp'], record) for record in level5data.scene]
@@ -83,6 +82,7 @@ if __name__ == '__main__':
     NUM_WORKERS = os.cpu_count()*3
     count =0
     if not os.path.exists(ARTIFACTS_FOLDER):
+        os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
         for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
             count+=1
             print("Preparing data into {} using {} workers".format(data_folder, NUM_WORKERS))
