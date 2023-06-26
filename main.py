@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     train_data_folder = os.path.join(ARTIFACTS_FOLDER, "bev_train_data")
     validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
-    NUM_WORKERS = os.cpu_count()
+    NUM_WORKERS = int(os.cpu_count()*1.5)
 
     if not os.path.isdir(ARTIFACTS_FOLDER) or not os.path.isdir(train_data_folder) or not os.path.isdir(validation_data_folder) :
         os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
