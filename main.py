@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     json_path='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
     dataset_path='Dataset'
-    opts, args = getopt.getopt(sys.argv,"hi:o:",["ifile=","ofile="])
+    opts, args = getopt.getopt(sys.argv,"h",["dataset=","json="])
     for opt, arg in opts:
         if opt == '-h':
             print ('main.py -dataset <dataset path> -json <json path>')
