@@ -4,14 +4,12 @@ import torch
 import os 
 from tqdm import tqdm
 from lyft_dataset_sdk.lyftdataset import LyftDataset
-# from lyft_dataset_sdk.utils.data_classes import LidarPointCloud, Box, Quaternion
-# from lyft_dataset_sdk.utils.geometry_utils import view_points, transform_matrix
+import sys, getopt
 from datetime import datetime
 import pandas as pd
 from transformation import  prepare_training_data_for_scene
 from functools import partial
 from multiprocessing import Pool
-import sys
 from train import train,predict,visualize_boxes,clean_up
 # Disable multiprocesing for numpy/opencv. We already multiprocess ourselves, this would mean every subprocess produces
 # even more threads which would lead to a lot of context switching, slowing things down a lot.
@@ -25,14 +23,26 @@ def visualize_lidar_of_sample(level5data,sample_token, axes_limit=80):
     
 
 
+
 if __name__ == '__main__':
-    json_path = sys.argv[1]
+
+    json_path='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
+    dataset_path='Dataset'
+    opts, args = getopt.getopt(sys.argv,"hi:o:",["ifile=","ofile="])
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('main.py -dataset <dataset path> -json <json path>')
+            sys.exit()
+        elif opt in ("--dataset"):
+            dataset_path = arg
+        elif opt in ( "--json"):
+            json_path = arg
+
     # Our code will generate data, visualization and model checkpoints, they will be persisted to disk in this folder
     ARTIFACTS_FOLDER = "./artifacts"
-    # json_path='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
-    # json_path='Dataset/train_data'
 
-    level5data = LyftDataset(data_path='Dataset', json_path=json_path, verbose=True)
+
+    level5data = LyftDataset(data_path=dataset_path, json_path=json_path, verbose=True)
     os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
     classes = ["car", "motorcycle", "bus", "bicycle", "truck", "pedestrian", "other_vehicle", "animal", "emergency_vehicle"]
 
