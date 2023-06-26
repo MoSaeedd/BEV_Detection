@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     train_data_folder = os.path.join(ARTIFACTS_FOLDER, "bev_train_data")
     validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
-    NUM_WORKERS = 2
+    NUM_WORKERS = os.cpu_count()*3
     count =0
     for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
         count+=1
