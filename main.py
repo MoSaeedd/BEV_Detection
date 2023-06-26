@@ -42,7 +42,6 @@ if __name__ == '__main__':
 
 
     level5data = LyftDataset(data_path=dataset_path, json_path=json_path, verbose=True)
-    os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
     classes = ["car", "motorcycle", "bus", "bicycle", "truck", "pedestrian", "other_vehicle", "animal", "emergency_vehicle"]
 
     records = [(level5data.get('sample', record['first_sample_token'])['timestamp'], record) for record in level5data.scene]
@@ -80,24 +79,25 @@ if __name__ == '__main__':
 
     train_data_folder = os.path.join(ARTIFACTS_FOLDER, "bev_train_data")
     validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
-    NUM_WORKERS = os.cpu_count()*3
-    count =0
-    for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
-        count+=1
-        print("Preparing data into {} using {} workers".format(data_folder, NUM_WORKERS))
-        first_samples = df.first_sample_token.values
+    NUM_WORKERS = os.cpu_count()
 
-        os.makedirs(data_folder, exist_ok=True)
-        
-        process_func = partial(prepare_training_data_for_scene,
-                            level5data=level5data,classes=classes,
-                            output_folder=data_folder, bev_shape=bev_shape, voxel_size=voxel_size, z_offset=z_offset, box_scale=box_scale)
+    if not os.path.isdir(ARTIFACTS_FOLDER) or not os.path.isdir(train_data_folder) or not os.path.isdir(validation_data_folder) :
+        os.makedirs(ARTIFACTS_FOLDER, exist_ok=True)
+        for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
+            print("Preparing data into {} using {} workers".format(data_folder, NUM_WORKERS))
+            first_samples = df.first_sample_token.values
 
-        pool = Pool(NUM_WORKERS)
-        for _ in tqdm(pool.imap_unordered(process_func, first_samples), total=len(first_samples)):
-            pass
-        pool.close()
-        del pool
+            os.makedirs(data_folder, exist_ok=True)
+            
+            process_func = partial(prepare_training_data_for_scene,
+                                level5data=level5data,classes=classes,
+                                output_folder=data_folder, bev_shape=bev_shape, voxel_size=voxel_size, z_offset=z_offset, box_scale=box_scale)
+
+            pool = Pool(NUM_WORKERS)
+            for _ in tqdm(pool.imap_unordered(process_func, first_samples), total=len(first_samples)):
+                pass
+            pool.close()
+            del pool
 
     # Some hyperparameters we'll need to define for the system
     voxel_size = (0.4, 0.4, 1.5)
@@ -124,4 +124,3 @@ if __name__ == '__main__':
                                                                             ARTIFACTS_FOLDER,
                                                                             class_weights)
     visualize_boxes(predictions_opened,detection_boxes,detection_scores,id)
-    clean_up(train_data_folder,validation_data_folder)
