@@ -78,34 +78,27 @@ if __name__ == '__main__':
     # We scale down each box so they are more separated when projected into our coarse voxel space.
     box_scale = 0.8
 
-    # Some hyperparameters we'll need to define for the system
-    voxel_size = (0.4, 0.4, 1.5)
-    z_offset = -2.0
-    bev_shape = (336, 336, 3)
-
-    # We scale down each box so they are more separated when projected into our coarse voxel space.
-    box_scale = 0.8
-
     train_data_folder = os.path.join(ARTIFACTS_FOLDER, "bev_train_data")
     validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
     NUM_WORKERS = os.cpu_count()*3
     count =0
-    for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
-        count+=1
-        print("Preparing data into {} using {} workers".format(data_folder, NUM_WORKERS))
-        first_samples = df.first_sample_token.values
+    if not os.path.exists(ARTIFACTS_FOLDER):
+        for df, data_folder in [(train_df, train_data_folder), (validation_df, validation_data_folder)]:
+            count+=1
+            print("Preparing data into {} using {} workers".format(data_folder, NUM_WORKERS))
+            first_samples = df.first_sample_token.values
 
-        os.makedirs(data_folder, exist_ok=True)
-        
-        process_func = partial(prepare_training_data_for_scene,
-                            level5data=level5data,classes=classes,
-                            output_folder=data_folder, bev_shape=bev_shape, voxel_size=voxel_size, z_offset=z_offset, box_scale=box_scale)
+            os.makedirs(data_folder, exist_ok=True)
+            
+            process_func = partial(prepare_training_data_for_scene,
+                                level5data=level5data,classes=classes,
+                                output_folder=data_folder, bev_shape=bev_shape, voxel_size=voxel_size, z_offset=z_offset, box_scale=box_scale)
 
-        pool = Pool(NUM_WORKERS)
-        for _ in tqdm(pool.imap_unordered(process_func, first_samples), total=len(first_samples)):
-            pass
-        pool.close()
-        del pool
+            pool = Pool(NUM_WORKERS)
+            for _ in tqdm(pool.imap_unordered(process_func, first_samples), total=len(first_samples)):
+                pass
+            pool.close()
+            del pool
 
     # Some hyperparameters we'll need to define for the system
     voxel_size = (0.4, 0.4, 1.5)
@@ -118,6 +111,8 @@ if __name__ == '__main__':
     validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
 
     # We weigh the loss for the 0 class lower to account for (some of) the big class imbalance.
+    if not torch.cuda.is_available():
+        print("Warning: No GPU Device found")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     class_weights = torch.from_numpy(np.array([0.2] + [1.0]*len(classes), dtype=np.float32))
     class_weights = class_weights.to(device)
