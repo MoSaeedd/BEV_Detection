@@ -11,6 +11,8 @@ from transformation import  prepare_training_data_for_scene
 from functools import partial
 from multiprocessing import Pool
 from train import train,predict,visualize_boxes,clean_up
+from argparse import ArgumentParser
+
 # Disable multiprocesing for numpy/opencv. We already multiprocess ourselves, this would mean every subprocess produces
 # even more threads which would lead to a lot of context switching, slowing things down a lot.
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -26,17 +28,26 @@ def visualize_lidar_of_sample(level5data,sample_token, axes_limit=80):
 
 if __name__ == '__main__':
 
-    json_path='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
-    dataset_path='Dataset'
-    opts, args = getopt.getopt(sys.argv[1:],"h",["dataset=","json="])
-    for opt, arg in opts:
-        if opt == '-h':
-            print ('main.py -dataset <dataset path> -json <json path>')
-            sys.exit()
-        elif opt in ("--dataset"):
-            dataset_path = arg
-        elif opt in ( "--json"):
-            json_path = arg
+    parser = ArgumentParser(description='BEV Detection from Lidar & Camera')
+    parser.add_argument('integers', metavar='N', type=int, nargs='+',
+                    help='an integer for the accumulator')
+    parser.add_argument('--dataset', dest='dataset_path',action='store_const',
+                        const='Dataset', default='Dataset',
+                        help='Path to folder containing training Json file')
+    parser.add_argument('--json', dest='json_path',action='store_const',
+                        const='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
+                        ,default='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
+                        ,help='Dataset folder path')
+    parser.add_argument('--train', dest='train', action='store_const',
+                        const=True, default=False,
+                        help='add this option for training')
+
+    args = parser.parse_args()
+
+    json_path = args.json_path
+    dataset_path = args.dataset_path
+    train = args.train
+
     # Our code will generate data, visualization and model checkpoints, they will be persisted to disk in this folder
     ARTIFACTS_FOLDER = "./artifacts"
 
@@ -116,8 +127,8 @@ if __name__ == '__main__':
     class_weights = torch.from_numpy(np.array([0.2] + [1.0]*len(classes), dtype=np.float32))
     class_weights = class_weights.to(device)
 
-
-    train(train_data_folder,classes, ARTIFACTS_FOLDER)
+    if train:
+        train(train_data_folder,classes, ARTIFACTS_FOLDER)
 
     predictions_opened,predictions,detection_boxes,detection_classes,detection_scores =predict(validation_data_folder,
                                                                             classes, 
