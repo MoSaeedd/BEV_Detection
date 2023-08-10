@@ -116,7 +116,7 @@ def train(train_data_folder,classes, ARTIFACTS_FOLDER):
 
 
     batch_size = 8
-    epochs = 15 # Note: We may be able to train for longer and expect better results, the reason this number is low is to keep the runtime short.
+    epochs = 30 # Note: We may be able to train for longer and expect better results, the reason this number is low is to keep the runtime short.
 
     model = get_unet_model(num_output_classes=len(classes)+1)
     model = model.to(device)
