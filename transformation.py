@@ -54,7 +54,7 @@ def create_voxel_pointcloud(points, shape, voxel_size=(0.5,0.5,1), z_offset=0):
     
     points_voxel_coords = points_voxel_coords[within_bounds]
     coord, count = np.unique(points_voxel_coords, axis=0, return_counts=True)
-        
+
     # Note X and Y are flipped:
     bev[coord[:,1], coord[:,0], coord[:,2]] = count
     

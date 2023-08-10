@@ -4,13 +4,15 @@ import torch
 import os 
 from tqdm import tqdm
 from lyft_dataset_sdk.lyftdataset import LyftDataset
+from lyft_dataset_sdk.eval.detection.mAP_evaluation import get_average_precisions
+
 import sys, getopt
 from datetime import datetime
 import pandas as pd
 from transformation import  prepare_training_data_for_scene
 from functools import partial
 from multiprocessing import Pool
-from train import train,predict,visualize_boxes,clean_up
+from train import train,predict,visualize_boxes,clean_up,load_groundtruth_boxes,get_pred_box3ds
 from argparse import ArgumentParser
 
 # Disable multiprocesing for numpy/opencv. We already multiprocess ourselves, this would mean every subprocess produces
@@ -29,15 +31,14 @@ def visualize_lidar_of_sample(level5data,sample_token, axes_limit=80):
 if __name__ == '__main__':
 
     parser = ArgumentParser(description='BEV Detection from Lidar & Camera')
-    parser.add_argument('integers', metavar='N', type=int, nargs='+',
-                    help='an integer for the accumulator')
+
     parser.add_argument('--dataset', dest='dataset_path',action='store_const',
                         const='Dataset', default='Dataset',
-                        help='Path to folder containing training Json file')
+                        help='Dataset folder path')
     parser.add_argument('--json', dest='json_path',action='store_const',
                         const='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
                         ,default='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
-                        ,help='Dataset folder path')
+                        ,help='Path to folder containing training Json file')
     parser.add_argument('--train', dest='train', action='store_const',
                         const=True, default=False,
                         help='add this option for training')
@@ -110,12 +111,6 @@ if __name__ == '__main__':
             pool.close()
             del pool
 
-    # Some hyperparameters we'll need to define for the system
-    voxel_size = (0.4, 0.4, 1.5)
-    z_offset = -2.0
-    bev_shape = (336, 336, 3)
-    # We scale down each box so they are more separated when projected into our coarse voxel space.
-    box_scale = 0.8
 
     train_data_folder = os.path.join(ARTIFACTS_FOLDER, "bev_train_data")
     validation_data_folder = os.path.join(ARTIFACTS_FOLDER, "./bev_validation_data")
@@ -130,8 +125,15 @@ if __name__ == '__main__':
     if train:
         train(train_data_folder,classes, ARTIFACTS_FOLDER)
 
-    predictions_opened,predictions,detection_boxes,detection_classes,detection_scores =predict(validation_data_folder,
+    predictions_opened,predictions,detection_boxes,detection_classes,detection_scores,sample_tokens =predict(validation_data_folder,
                                                                             classes, 
                                                                             ARTIFACTS_FOLDER,
                                                                             class_weights)
+    id = 0
     visualize_boxes(predictions_opened,detection_boxes,detection_scores,id)
+
+    ## For Evaluation : gt_box3ds and pred_3d_boxes are used 
+    gt_box3ds = load_groundtruth_boxes(level5data, sample_tokens)
+    pred_3d_boxes = get_pred_box3ds(level5data,sample_tokens, detection_boxes, detection_scores, detection_classes
+                    ,bev_shape, voxel_size, z_offset,box_scale)
+    get_average_precisions(gt_box3ds, pred_3d_boxes, classes,0.5)
