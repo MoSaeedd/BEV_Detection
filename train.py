@@ -46,7 +46,7 @@ def load_groundtruth_boxes(level5data, sample_tokens):
                 rotation=sample_annotation['rotation'],
                 name=class_name
             )
-            gt_box3ds.append(box3d)
+            gt_box3ds.append(box3d.__dict__)
             
     return gt_box3ds
 
@@ -400,7 +400,7 @@ def get_pred_box3ds(level5data,sample_tokens, detection_boxes, detection_scores,
                 name=class_name,
                 score=detection_score
             )
-            pred_box3ds.append(box3d)
+            pred_box3ds.append(box3d.__dict__)
 
 def clean_up(train_data_folder,validation_data_folder):
     shutil.rmtree(train_data_folder)
