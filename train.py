@@ -295,7 +295,7 @@ def predict(validation_data_folder,classes, ARTIFACTS_FOLDER,class_weights):
         detection_classes.append(sample_detection_classes)
         
     print("Total amount of boxes:", np.sum([len(x) for x in detection_boxes]))
-    return prediction_opened,predictions,detection_boxes,detection_classes,detection_scores,sample_tokens
+    return predictions_opened,predictions,detection_boxes,detection_classes,detection_scores,sample_tokens
 
 # Visualize the boxes 
 def visualize_boxes(predictions_opened,detection_boxes,detection_scores,id):
