@@ -32,8 +32,7 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(description='BEV Detection from Lidar & Camera')
 
-    parser.add_argument('--dataset', dest='dataset_path',
-                        const='Dataset', default='Dataset',
+    parser.add_argument('--dataset', dest='dataset_path', default='Dataset',
                         help='Dataset folder path')
     parser.add_argument('--json', dest='json_path'
                         ,default='/kaggle/input/3d-object-detection-for-autonomous-vehicles/train_data'
