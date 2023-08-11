@@ -401,6 +401,7 @@ def get_pred_box3ds(level5data,sample_tokens, detection_boxes, detection_scores,
                 score=detection_score
             )
             pred_box3ds.append(box3d.__dict__)
+    return pred_box3ds
 
 def clean_up(train_data_folder,validation_data_folder):
     shutil.rmtree(train_data_folder)
