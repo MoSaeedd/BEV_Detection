@@ -310,7 +310,7 @@ def visualize_boxes(predictions_opened,detection_boxes,detection_scores,id):
     plt.hist(detection_scores[0], bins=20)
     plt.xlabel("Detection Score")
     plt.ylabel("Count")
-    plt.show()
+    plt.savefig(str(id)+"boxes_predicted.png")
 
 # gt_box3ds = load_groundtruth_boxes(level5data, sample_tokens)
 
